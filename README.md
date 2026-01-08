@@ -1,6 +1,9 @@
 packages installed are flask
+
  flask-sqlalchemy used to connect database with flask
+ 
  flask-jwt-extended for jwt token
+ 
  psycopg2-binary it is a PostgreSQL database driver for Python.
 
 
@@ -12,6 +15,8 @@ which is used to write code at different files and makes connection between or r
 
 config:
 it represents database connection details like secretkeys.
+
+used postman to register and login by CRUD operations
 
 command to run:
 python run.py
