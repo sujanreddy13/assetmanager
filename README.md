@@ -1,0 +1,17 @@
+packages installed are flask
+ flask-sqlalchemy used to connect database with flask
+ flask-jwt-extended for jwt token
+ psycopg2-binary it is a PostgreSQL database driver for Python.
+
+
+models is used to create models like to tables to store entered data:
+User is model like table table which stores details of user(name, email, password, role).
+
+used Blueprint:
+which is used to write code at different files and makes connection between or routes to each. By this the code is written to respective files.
+
+config:
+it represents database connection details like secretkeys.
+
+command to run:
+python run.py
