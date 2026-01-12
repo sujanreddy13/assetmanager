@@ -40,3 +40,31 @@ Includes authentication, asset lifecycle operations, and assignment tracking
 
 to run command required is:
 python run.py
+
+To test in postman:
+for register: /register
+"email": email,
+"password": password,
+"role": role
+
+
+for login: /login
+"email": email,
+"password": password
+
+for assets: /asset (for registering or adding asset)
+"asset_tag": any asset tag,
+"name": asset name
+
+for assign: /assign
+asset_id: asset_id(any asset_id which is created during /asset)
+"employee_id": any employee id
+
+for assignment: /assignment
+it shows all assignments with asset id, assigned employee
+here we user get method
+
+for release: /release/asset_id (the asset_id which we want to rlease)
+use put method
+
+for retire: /retire/asset_id(for which asset should be retired)
