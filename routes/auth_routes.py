@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 auth_bp = Blueprint("auth", __name__)
 
-# rigister route for new users
+# rigistering f account not exsait
 
 @auth_bp.route("/register", methods=["POST"])
 def register():
@@ -14,7 +14,6 @@ def register():
     if User.query.filter_by(email=data["email"]).first():
         return jsonify(msg="User already exists"), 400
 
-    # Hash the password and sac=ving it in the db
     hashed_password = generate_password_hash(data["password"])
     user = User(
         email=data["email"],
@@ -27,7 +26,7 @@ def register():
 
     return jsonify(msg="User registered successfully"), 201
 
-
+#login for all users
 
 @auth_bp.route("/login", methods=["POST"])
 def login():

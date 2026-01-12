@@ -24,5 +24,4 @@ def create_employee():
 
     db.session.add(emp)
     db.session.commit()
-
     return jsonify(msg="Employee created"), 201

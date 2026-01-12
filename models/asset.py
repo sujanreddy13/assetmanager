@@ -5,3 +5,5 @@ class Asset(db.Model):
     asset_tag = db.Column(db.String(50), unique=True)
     name = db.Column(db.String(100))
     status = db.Column(db.String(20), default="available")
+
+    retired_at = db.Column(db.DateTime, nullable=True)
