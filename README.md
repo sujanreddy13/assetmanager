@@ -1,24 +1,43 @@
-packages installed are flask
-
- flask-sqlalchemy used to connect database with flask
- 
- flask-jwt-extended for jwt token
- 
- psycopg2-binary it is a PostgreSQL database driver for Python.
+A Flask-based backend application to manage company assets and track their
+assignment to employees throughout the asset lifecycle.
 
 
-models is used to create models like to tables to store entered data:
-User is model like table table which stores details of user(name, email, password, role).
-employee model has fileds like name, email, department 
-asset model is used to store assets this include fields like asset_tag, name, status
+Flask
+Flask-SQLAlchemy
+PostgreSQL
+Flask-JWT-Extended
+APScheduler
 
-used Blueprint:
-which is used to write code at different files and makes connection between or routes to each. By this the code is written to respective files.
 
-config:
-it represents database connection details like secretkeys.
+packages used
+flask – Web framework
+flask-sqlalchemy – ORM for database integration
+flask-jwt-extended – JWT-based authentication
+psycopg2-binary – PostgreSQL database driver
 
-used postman to register and login by CRUD operations
 
-command to run:
+Models used:
+User- Stores user details: name, email, password, role
+
+asset- Stores asset details: asset_tag, name, status
+
+Assignment_track- Tracks asset assignment, release, and history
+
+
+Role-based authentication (Admin, Asset Manager, Employee)
+CRUD operations for assets and employees
+Asset assignment and release with validation
+Prevention of double assignment
+Asset retirement handling
+Assignment history (audit log)
+Background task for asset return reminders
+
+Blueprints- are used to organize routes into separate modules
+Config- file stores database connection details and secret keys
+
+
+All API routes are tested using 
+Includes authentication, asset lifecycle operations, and assignment tracking
+
+bash
 python run.py
