@@ -35,9 +35,8 @@ Background task for asset return reminders
 Blueprints- are used to organize routes into separate modules
 Config- file stores database connection details and secret keys
 
-
 All API routes are tested using 
 Includes authentication, asset lifecycle operations, and assignment tracking
 
-bash
+to run command required is:
 python run.py
