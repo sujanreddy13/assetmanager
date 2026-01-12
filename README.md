@@ -1,7 +1,7 @@
 A Flask-based backend application to manage company assets and track their
 assignment to employees throughout the asset lifecycle.
 
-
+Tec-stack used:
 Flask
 Flask-SQLAlchemy
 PostgreSQL
