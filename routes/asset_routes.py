@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
-from models.asset import Asset
+from marshmallow import ValidationError
+from models.asset import Asset, AssetSchema
 from models.assignment import AssetAssignment
 from models.employee import Employee
 from extensions import db
@@ -9,27 +10,53 @@ from datetime import datetime
 
 asset_bp = Blueprint("asset", __name__)
 
+# @asset_bp.route("/assets", methods=["POST"])
+# @jwt_required()
+# @role_required(["admin", "asset_manager"])
+# def create_asset():
+#     data = request.get_json()
+#     asset_tag = data.get("asset_tag")
+#     name = data.get("name")
+
+#     if not asset_tag or not name:
+#         return jsonify(msg="Asset tag and name are required"), 400
+
+#     asset = Asset(asset_tag=asset_tag, name=name)
+
+#     try:
+#         db.session.add(asset)
+#         db.session.commit()
+#     except Exception as e:
+#         db.session.rollback()
+#         return jsonify(msg=f"Error creating asset: {str(e)}"), 500
+
+#     return jsonify(msg="Asset created"), 201
 @asset_bp.route("/assets", methods=["POST"])
 @jwt_required()
 @role_required(["admin", "asset_manager"])
 def create_asset():
-    data = request.get_json()
-    asset_tag = data.get("asset_tag")
-    name = data.get("name")
+    schema = AssetSchema()
 
-    if not asset_tag or not name:
-        return jsonify(msg="Asset tag and name are required"), 400
+    try:
+        data = schema.load(request.get_json())
+    except ValidationError as err:
+        return jsonify(errors=err.messages), 400
 
-    asset = Asset(asset_tag=asset_tag, name=name)
+    asset = Asset(
+        asset_tag=data["asset_tag"],
+        name=data["name"]
+    )
 
     try:
         db.session.add(asset)
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        return jsonify(msg=f"Error creating asset: {str(e)}"), 500
+        return jsonify(msg="Error creating asset"), 500
 
-    return jsonify(msg="Asset created"), 201
+    return jsonify(msg="Asset created successfully"), 201
+
+
 
 @asset_bp.route("/assign", methods=["POST"])
 @jwt_required()
@@ -62,6 +89,9 @@ def assign_asset():
         return jsonify(msg=f"Error assigning asset: {str(e)}"), 500
 
     return jsonify(msg="Asset assigned"), 200
+
+
+
 
 
 @asset_bp.route("/release/<int:asset_id>", methods=["PUT"])
@@ -107,6 +137,12 @@ def retire_asset(asset_id):
 
     return jsonify(msg="Asset retired successfully"), 200
 
+#filtering 
+
+
+
+    
+
 
 @asset_bp.route("/assignments", methods=["GET"])
 @jwt_required()
@@ -124,4 +160,5 @@ def assignment_history():
         })
 
     return jsonify(result), 200
+
 

@@ -4,6 +4,7 @@ from extensions import db, jwt, scheduler
 from routes.auth_routes import auth_bp
 from routes.asset_routes import asset_bp
 from routes.employee_routes import employee_bp
+from routes.filter_routes import filter_bp
 from tasks.asset_tasks import asset_return_reminder  
 
 def create_app():
@@ -31,6 +32,7 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(asset_bp)
     app.register_blueprint(employee_bp)
+    app.register_blueprint(filter_bp)
 
     with app.app_context():
         db.create_all()

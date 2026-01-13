@@ -41,3 +41,4 @@ def login():
         additional_claims={"role": user.role}
     )
     return jsonify(token=token)
+
