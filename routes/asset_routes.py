@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from marshmallow import ValidationError
 from models.asset import Asset, AssetSchema
-from models.assignment import AssetAssignment
+from models.assignment import AssetAssignment, AssetAssignmentSchema
 from models.employee import Employee
 from extensions import db
 from flask_jwt_extended import jwt_required
@@ -10,27 +10,7 @@ from datetime import datetime
 
 asset_bp = Blueprint("asset", __name__)
 
-# @asset_bp.route("/assets", methods=["POST"])
-# @jwt_required()
-# @role_required(["admin", "asset_manager"])
-# def create_asset():
-#     data = request.get_json()
-#     asset_tag = data.get("asset_tag")
-#     name = data.get("name")
 
-#     if not asset_tag or not name:
-#         return jsonify(msg="Asset tag and name are required"), 400
-
-#     asset = Asset(asset_tag=asset_tag, name=name)
-
-#     try:
-#         db.session.add(asset)
-#         db.session.commit()
-#     except Exception as e:
-#         db.session.rollback()
-#         return jsonify(msg=f"Error creating asset: {str(e)}"), 500
-
-#     return jsonify(msg="Asset created"), 201
 @asset_bp.route("/assets", methods=["POST"])
 @jwt_required()
 @role_required(["admin", "asset_manager"])
@@ -62,23 +42,32 @@ def create_asset():
 @jwt_required()
 @role_required(["admin", "asset_manager"])
 def assign_asset():
-    data = request.get_json()
-    asset_id = data.get("asset_id")
-    employee_id = data.get("employee_id")
 
-    asset = Asset.query.get(asset_id)
-    employee = Employee.query.get(employee_id)
+    schema = AssetAssignmentSchema()
+    try:
+        data = schema.load(request.get_json())
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+
+    asset = Asset.query.get(data["asset_id"])
+    employee = Employee.query.get(data["employee_id"])
+
     if not asset:
         return jsonify(msg="Asset not found"), 404
     if not employee:
         return jsonify(msg="Employee not found"), 404
+
     if asset.status == "assigned":
         return jsonify(msg="Asset already assigned"), 400
     if asset.status == "retired":
         return jsonify(msg="Cannot assign a retired asset"), 400
 
+    assignment = AssetAssignment(
+        asset_id=asset.id,
+        employee_id=employee.id,
+        assigned_at=datetime.utcnow()
+    )
 
-    assignment = AssetAssignment(asset_id=asset.id, employee_id=employee.id)
     asset.status = "assigned"
 
     try:
@@ -88,22 +77,24 @@ def assign_asset():
         db.session.rollback()
         return jsonify(msg=f"Error assigning asset: {str(e)}"), 500
 
-    return jsonify(msg="Asset assigned"), 200
-
-
-
+    return jsonify(
+        msg="Asset assigned successfully",
+        assignment=schema.dump(assignment)
+    ), 201
 
 
 @asset_bp.route("/release/<int:asset_id>", methods=["PUT"])
 @jwt_required()
 @role_required(["admin", "asset_manager"])
 def release_asset(asset_id):
+
     assignment = AssetAssignment.query.filter_by(asset_id=asset_id, released_at=None).first()
+
     if not assignment:
         return jsonify(msg="No active assignment found"), 404
 
     assignment.released_at = datetime.utcnow()
-    assignment.asset = Asset.query.get(asset_id) 
+    assignment.asset=Asset.query.get(asset_id)
     assignment.asset.status = "available"
 
     try:
@@ -112,7 +103,11 @@ def release_asset(asset_id):
         db.session.rollback()
         return jsonify(msg=f"Error releasing asset: {str(e)}"), 500
 
-    return jsonify(msg="Asset released"), 200
+    schema = AssetAssignmentSchema()
+    return jsonify(
+        message="Asset released successfully",
+        assignment=schema.dump(assignment)), 200
+
 
 
 @asset_bp.route("/retire/<int:asset_id>", methods=["PUT"])
@@ -133,15 +128,15 @@ def retire_asset(asset_id):
     asset.status = "retired"
     asset.retired_at = datetime.utcnow()
 
-    db.session.commit()
-
-    return jsonify(msg="Asset retired successfully"), 200
-
-#filtering 
-
-
-
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(msg=f"Error retiring asset: {str(e)}"), 500
     
+    schema = AssetSchema()
+    return jsonify(msg="Asset retired successfully", asset=schema.dump(asset)), 200
+
 
 
 @asset_bp.route("/assignments", methods=["GET"])
@@ -149,16 +144,18 @@ def retire_asset(asset_id):
 @role_required(["admin", "asset_manager"])
 def assignment_history():
     assignments = AssetAssignment.query.all()
-    result = []
+    schema= AssetAssignmentSchema(many=True)
+    return jsonify(schema.dump(assignments)), 200
+    # result = []
 
-    for a in assignments:
-        result.append({
-            "asset_id": a.asset_id,
-            "employee_id": a.employee_id,
-            "assigned_at": a.assigned_at,
-            "released_at": a.released_at
-        })
+    # for a in assignments:
+    #     result.append({
+    #         "asset_id": a.asset_id,
+    #         "employee_id": a.employee_id,
+    #         "assigned_at": a.assigned_at,
+    #         "released_at": a.released_at
+    #     })
 
-    return jsonify(result), 200
+    # return jsonify(result), 200
 
 

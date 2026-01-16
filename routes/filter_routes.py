@@ -1,20 +1,42 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 from models.asset import Asset, AssetSchema
-from models.assignment import AssetAssignment
+from models.assignment import AssetAssignment, AssetAssignmentSchema
 from utils.role_required import role_required
 
 filter_bp = Blueprint("filter_bp", __name__)
 
 
-
+# @filter_bp.route("/assets", methods=["GET"])
+# @jwt_required()
+# @role_required(["admin", "asset_manager", "employee"])
+# def list_assets():
+#     asset = Asset.query.all()
+#     schema = AssetSchema(many=True)
+#     return jsonify(schema.dump(asset)), 200
 @filter_bp.route("/assets", methods=["GET"])
 @jwt_required()
 @role_required(["admin", "asset_manager", "employee"])
 def list_assets():
-    asset = Asset.query.all()
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 5, type=int)
+
+    pagination = Asset.query.paginate(
+        page=page,
+        per_page=per_page,
+        error_out=False
+    )
+
+    assets = pagination.items
     schema = AssetSchema(many=True)
-    return jsonify(schema.dump(asset)), 200
+
+    return jsonify({
+        "total_records": pagination.total,
+        "total_pages": pagination.pages,
+        "current_page": pagination.page,
+        "per_page": pagination.per_page,
+        "assets": schema.dump(assets)
+    }), 200
 
 
 @filter_bp.route("/assets/<int:asset_id>", methods=["GET"])
@@ -33,60 +55,102 @@ def get_asset(asset_id):
 @jwt_required()
 @role_required(["admin", "asset_manager", "employee"])
 def get_asset_assignment(asset_id):
-    assignments = AssetAssignment.query.filter_by(asset_id=asset_id).all()
-    if not assignments:
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 5, type=int)
+
+    pagination = (
+        AssetAssignment.query
+        .filter_by(asset_id=asset_id)
+        .order_by(AssetAssignment.assigned_at.desc())
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
+
+    if pagination.total == 0:
         return jsonify(msg="No assignments found for this asset"), 404
 
-    result = []
-    for a in assignments:
-        result.append({
-            "asset_id": a.asset_id,
-            "employee_id": a.employee_id,
-            "assigned_at": a.assigned_at,
-            "released_at": a.released_at
-        })
+    schema = AssetAssignmentSchema(many=True)
 
-    return jsonify(result), 200
+    return jsonify({
+        "total_records": pagination.total,
+        "page": pagination.page,
+        "per_page": pagination.per_page,
+        "total_pages": pagination.pages,
+        "assignments": schema.dump(pagination.items)
+    }), 200
+
+
+    # result = []
+    # for a in assignments:
+    #     result.append({
+    #         "asset_id": a.asset_id,
+    #         "employee_id": a.employee_id,
+    #         "assigned_at": a.assigned_at,
+    #         "released_at": a.released_at
+    #     })
+
+    # return jsonify(result), 200
 
 
 @filter_bp.route("/release", methods=["GET"])
 @jwt_required()
 @role_required(["admin", "asset_manager", "employee"])
 def get_release_history():
-    assignments = AssetAssignment.query.filter_by(released_at=None).all()
-    if not assignments:
+    page=request.args.get("page", 1, type=int)
+    per_page=request.args.get("per_page", 5, type=int)
+
+    pagination = (
+        AssetAssignment.query.filter_by(released_at=None)
+        .order_by(AssetAssignment.assigned_at.desc())
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
+    if pagination.total == 0:
         return jsonify(msg="No active assignments found"), 404
 
-    result = []
-    for a in assignments:
-        result.append({
-            "asset_id": a.asset_id,
-            "employee_id": a.employee_id,
-            "assigned_at": a.assigned_at,
-            "released_at": a.released_at
-        })
+    schema = AssetAssignmentSchema(many=True)
+    return jsonify({
+        "total_records": pagination.total,
+        "page": pagination.page,
+        "per_page": pagination.per_page,
+        "total_pages": pagination.pages,
+        "assignments": schema.dump(pagination.items)
+    }), 200
 
-    return jsonify(result), 200
-
+    
 
 @filter_bp.route("/release/<int:asset_id>", methods=["GET"])
 @jwt_required()
 @role_required(["admin", "asset_manager", "employee"])
 def get_asset_release_history(asset_id):
-    assignments = AssetAssignment.query.filter(AssetAssignment.asset_id==asset_id, AssetAssignment.released_at.isnot(None)).all()
-    if not assignments:
+    page=request.args.get("page", 1, type=int)
+    per_page=request.args.get("per_page", 5, type=int)
+
+    pagination = (
+        AssetAssignment.query.filter(AssetAssignment.asset_id==asset_id, AssetAssignment.released_at.isnot(None))
+        .order_by(AssetAssignment.released_at.desc())
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
+    if pagination.total == 0:
         return jsonify(msg="No release history found for this asset"), 404
 
-    result = []
-    for a in assignments:
-        result.append({
-            "asset_id": a.asset_id,
-            "employee_id": a.employee_id,
-            "assigned_at": a.assigned_at,
-            "released_at": a.released_at
-        })
+    schema = AssetAssignmentSchema(many=True)
+    return jsonify({
+        "total_records": pagination.total,
+        "page": pagination.page,
+        "per_page": pagination.per_page,
+        "total_pages": pagination.pages,
+        "assignments": schema.dump(pagination.items)
+    }), 200
 
-    return jsonify(result), 200
+    # result = []
+    # for a in assignments:
+    #     result.append({
+    #         "asset_id": a.asset_id,
+    #         "employee_id": a.employee_id,
+    #         "assigned_at": a.assigned_at,
+    #         "released_at": a.released_at
+    #     })
+
+    # return jsonify(result), 200
 
 
 
@@ -94,12 +158,25 @@ def get_asset_release_history(asset_id):
 @jwt_required()
 @role_required(["admin", "asset_manager", "employee"])
 def get_retired_assets():
-    assets = Asset.query.filter_by(status="retired").all()
-    if not assets:
+    page=request.args.get("page", 1, type=int)
+    per_page=request.args.get("per_page", 5, type=int)
+
+    pagination = (
+        Asset.query.filter_by(status="retired")
+        .order_by(Asset.id.desc())
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
+    if pagination.total == 0:
         return jsonify(msg="No retired assets found"), 404
 
     schema = AssetSchema(many=True)
-    return jsonify(schema.dump(assets)), 200
+    return jsonify({
+        "total_records": pagination.total,
+        "page": pagination.page,
+        "per_page": pagination.per_page,
+        "total_pages": pagination.pages,
+        "assets": schema.dump(pagination.items)
+    }), 200
 
 
 @filter_bp.route("/retired/<int:asset_id>", methods=["GET"])

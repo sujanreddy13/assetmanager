@@ -68,3 +68,6 @@ for release: /release/asset_id (the asset_id which we want to rlease)
 use put method
 
 for retire: /retire/asset_id(for which asset should be retired)
+
+
+docker-compose up --build
